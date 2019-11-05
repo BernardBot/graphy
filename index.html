@@ -105,6 +105,51 @@
 	var dist = {};
 	var pred = {};
 
+	function dijkstra() {
+	    let Q = [];
+
+            dist = {};
+            pred = {};
+
+            for (let node of nodes) {
+		dist[node.id] = Infinity;
+		pred[node.id] = null;
+		Q.push(node.id);
+            }
+
+            dist[source] = 0;
+
+	    while (Q.length > 0) {
+		let u = Q[0];
+
+		for (let v of Q) {
+		    if (dist[v] < dist[u])
+			u = v;
+		}
+
+		Q.splice(Q.indexOf(u), 1);
+
+		for (let link of links) {
+		    let a = link.source.id;
+		    let b = link.target.id;
+		    let w = link.weight;
+
+		    if (a === u) {
+			if (dist[u] + w < dist[b]) {
+			    dist[b] = dist[u] + w;
+			    pred[b] = u;
+			}
+		    }
+		    // We need to check both directions.
+		    if (b === u) {
+			if (dist[u] + w < dist[a]) {
+			    dist[a] = dist[u] + w;
+			    pred[a] = u;
+			}
+		    }
+		}
+	    }
+	}
 	function bellmanford() {
             dist = {};
             pred = {};
