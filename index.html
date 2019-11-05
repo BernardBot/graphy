@@ -104,6 +104,7 @@
 
 	var dist = {};
 	var pred = {};
+
 	function bellmanford() {
             dist = {};
             pred = {};
@@ -134,6 +135,15 @@
 		}
 	    }
 	}
+
+	/*
+    _ ____                     _
+ __| |__ /  __ _ _ _ __ _ _ __| |_
+/ _` ||_ \ / _` | '_/ _` | '_ \ ' \
+\__,_|___/ \__, |_| \__,_| .__/_||_|
+           |___/         |_|
+	   
+	  */
 	//empties the graph
 	function clearGraph() {
             nodes.splice(0);
@@ -296,6 +306,14 @@
             }
 	}
 
+	function setWeight(d, i) {
+	    d3.event.stopPropagation();
+	    let source = d.source;
+	    let target = d.target;
+	    removeEdge(d, i);
+            var newLink = { source, target, weight: parseInt(prompt('weight'))};
+            links.push(newLink);
+	}
 	//updates graph by updating links, nodes and binding them with DOM
 	//interface is defined through several events
 	function restart() {
@@ -308,13 +326,11 @@
 		.enter()
 		.append("line")
 		.attr("class", "edge")
-		.on("mousedown", function() {
-                    d3.event.stopPropagation();
-		})
+		.on("mousedown", setWeight)
 		.on("contextmenu", removeEdge);
 
             ed.append("title").text(function(d) {
-		return "v" + d.source.id + "-v" + d.target.id;
+		return "v" + d.source.id + "-v" + d.target.id + " (" + d.weight + ")";
             });
 
             edges = ed.merge(edges);
