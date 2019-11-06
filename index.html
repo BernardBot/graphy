@@ -19,7 +19,10 @@
           cursor: default;
       }
 
-      .path-edge,
+      .path-edge {
+          stroke: red;
+          stroke-width: 4px;
+      }
       .edge:hover,
       .dragLine {
           stroke: #333;
@@ -47,17 +50,18 @@
     <button onclick="findpath()">find path</button>
     Use dijkstra
     <input id="usedijkstra" type="checkbox">
-    <div id="path"></div>
+    <div id="path">click and drag to modify the graph</div>
 
     <div id="svg-wrap">
       <script src="https://d3js.org/d3.v4.min.js"></script> 
       <script>
 	/*
 	 TODO:
-	 - mark source node
-	 - button for dijkstra / bellmanford
-	 - shortest path function and display
-	 - distance / shortest path table
+	 - better way to set weight of edge
+	 - pretty print path
+	 - display node id
+	 - display edge weight
+	 - random graph function / button
 	 */
 	var usedijkstra = document.getElementById("usedijkstra");
 	var pathdiv = document.getElementById("path");
@@ -77,9 +81,11 @@
 		    bellmanford();
 
 		let current = target;
-		while (current != source) {
-		    path.push(current);
-		    current = pred[current];
+		if (dist[target] < Infinity) {
+		    while (current != source) {
+			path.push(current);
+			current = pred[current];
+		    }
 		}
 		path.push(source);
 		path.reverse();
@@ -105,7 +111,7 @@
             { source: 1, target: 2, weight: 10}
 	];
 
-	var source = 1;
+	var source = null;
 
 	var lastNodeId = nodes.length;
 	var r = 10;  // circle radius
@@ -147,9 +153,6 @@
 	var colors = d3.schemeCategory10;
 
 	var mousedownNode = null;
-
-	var clrBtn = d3.select("#clear-graph");
-	clrBtn.on("click", clearGraph);
 
 	var dist = {};
 	var pred = {};
@@ -245,6 +248,35 @@
             links.splice(0);
             lastNodeId = 0;
             restart();
+	}
+	
+	function randomGraph() {
+	    var graphn = document.getElementById("graph-n");
+	    var graphp = document.getElementById("graph-p");
+
+	    let n = graphn.value;
+	    let p = graphp.value;
+
+	    if (!isNaN(n) && !isNaN(p)) {
+		nodes.splice(0);
+		links.splice(0);
+		lastNodeId = 0;
+		restart();
+    		for (let i = 0; i < n; i++)
+		    nodes.push({ id: i});
+		for (let i = 0; i < n; i++) {
+		    for (let j = i + 1; j < n; j++) {
+			if (Math.random() < p) {
+			    let newLink = {source:i,target:j,weight:1};
+			    links.push(newLink);
+			}
+		    }
+		}
+		lastNodeId = n;
+		force.nodes(nodes);
+		force.force("link").links(links);
+		restart();
+	    }
 	}
 
 	//update the simulation
@@ -364,52 +396,18 @@
             links.push(newLink);
 	}
 
-	//one response per ctrl keydown
-	var lastKeyDown = -1;
-
-	function keydown() {
-            if (lastKeyDown !== -1) return;
-            lastKeyDown = d3.event.key;
-
-            if (lastKeyDown === "Control") {
-		vertices.call(
-                    d3
-			.drag()
-			.on("start", function dragstarted(d) {
-                            if (!d3.event.active) force.alphaTarget(1).restart();
-                            d.fx = d.x;
-                            d.fy = d.y;
-			})
-			.on("drag", function(d) {
-                            d.fx = d3.event.x;
-                            d.fy = d3.event.y;
-			})
-			.on("end", function(d) {
-                            if (!d3.event.active) force.alphaTarget(0);
-                            d.fx = null;
-                            d.fy = null;
-			})
-		);
-            }
-	}
-
-	function keyup() {
-            lastKeyDown = -1;
-            if (d3.event.key === "Control") {
-		vertices.on("mousedown.drag", null);
-            }
-	}
-
 	function setWeight(d, i) {
-	    d3.event.stopPropagation();
 	    let source = d.source;
 	    let target = d.target;
-	    let weight = parseInt(prompt('New weight'));
-	    if (isNaN(weight)) return;
-	    removeEdge(d, i);
-            var newLink = { source, target, weight };
-            links.push(newLink);
-	    restart();
+	    let promptext = "New weight for v" + source.id + "-v" + target.id;
+	    let weight = parseInt(prompt(promptext));
+	    if (!isNaN(weight)) {
+		var newLink = { source, target, weight };
+		links.splice(links.indexOf(d), 1);
+		restart();
+		links.push(newLink);
+		restart();
+	    }
 	}
 	//updates graph by updating links, nodes and binding them with DOM
 	//interface is defined through several events
@@ -427,12 +425,11 @@
 		})
 		.attr("class", "edge")
 		.on("contextmenu", removeEdge)
-		.on("mousedown", function () {
-		    console.log(d3.event.currentTarget);
+		.on("mousedown", function (d, i) {
 		    d3.event.stopPropagation();
-		    d3.event.preventDefault();
+		    if (d3.event.buttons === 1)
+			setWeight(d, i)
 		})
-		.on("dblclick", setWeight);
 
             ed.append("title").text(function(d) {
 		return "v" + d.source.id + "-v" + d.target.id + " (" + d.weight + ")";
@@ -456,9 +453,6 @@
 		})
 		.on("mousedown", beginDragLine)
 		.on("mouseup", endDragLine)
-		.on("dblclick", function(d, i) {
-		    console.log(d3.event.currentTarget);
-		})
 		.on("contextmenu", removeNode);
 
             ve.append("title").text(function(d) {
@@ -482,12 +476,12 @@
 	  })
 	  .on("mouseleave", hideDragLine);
 
-	      d3.select(window)
-	  .on("keydown", keydown)
-	  .on("keyup", keyup);
-
 	restart();
       </script>
     </div>
+    <button onclick="clearGraph()">clear graph</button>
+    <button onclick="randomGraph()">random graph</button>
+    <input id="graph-n" type="text" size="1" placeholder="n">
+    <input id="graph-p" type="text" size="1" placeholder="p">
   </body>
 </html>
