@@ -13,7 +13,7 @@
 
       .edge {
           stroke: #888;
-          stroke-width: 2px;
+          stroke-width: 8px;
           stroke-linecap: round;
           stroke-linejoin: round;
           cursor: default;
@@ -21,12 +21,12 @@
 
       .path-edge {
           stroke: red;
-          stroke-width: 4px;
+          stroke-width: 12px;
       }
       .edge:hover,
       .dragLine {
           stroke: #333;
-          stroke-width: 3px;
+          stroke-width: 10px;
       }
 
       .vertex {
@@ -44,9 +44,9 @@
     </style>
   </head>
   <body>
-    <input id="from" type="text" size="1" placeholder="v1">
+    <input id="from" type="text" size="1" placeholder="1">
     to
-    <input id="to" type="text" size="1" placeholder="v2">
+    <input id="to" type="text" size="1" placeholder="2">
     <button onclick="findpath()">find path</button>
     Use dijkstra
     <input id="usedijkstra" type="checkbox">
@@ -61,7 +61,6 @@
 	 - pretty print path
 	 - display node id
 	 - display edge weight
-	 - random graph function / button
 	 */
 	var usedijkstra = document.getElementById("usedijkstra");
 	var pathdiv = document.getElementById("path");
@@ -89,6 +88,8 @@
 		}
 		path.push(source);
 		path.reverse();
+
+		// highlight edges
 		d3.selectAll(".path-edge").classed("path-edge", false);
 		for (let i = 1; i < path.length; i++) {
 		    d3.select("#v" + path[i - 1] + "v" + path[i])
@@ -96,8 +97,11 @@
 		    d3.select("#v" + path[i] + "v" + path[i - 1])
 			.classed("path-edge", true);
 		}
+
+		// display path
 		pathdiv.innerHTML=JSON.stringify(path)+" "+dist[target];
 	    } else {
+		// vertices not found
 		pathdiv.innerHTML="source or target vertex not in graph";
 	    }
 	}
@@ -115,7 +119,7 @@
 
 	var lastNodeId = nodes.length;
 	var r = 10;  // circle radius
-	var h = 400;
+	var h = 500;
 	var w = 600;
 
 	var svg = d3
@@ -406,7 +410,6 @@
 		links.splice(links.indexOf(d), 1);
 		restart();
 		links.push(newLink);
-		restart();
 	    }
 	}
 	//updates graph by updating links, nodes and binding them with DOM
@@ -427,8 +430,10 @@
 		.on("contextmenu", removeEdge)
 		.on("mousedown", function (d, i) {
 		    d3.event.stopPropagation();
-		    if (d3.event.buttons === 1)
-			setWeight(d, i)
+		    if (d3.event.buttons === 1) {
+			setWeight(d, i);
+			restart();
+		    }
 		})
 
             ed.append("title").text(function(d) {
