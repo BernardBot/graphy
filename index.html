@@ -19,6 +19,7 @@
           cursor: default;
       }
 
+      .path-edge,
       .edge:hover,
       .dragLine {
           stroke: #333;
@@ -58,7 +59,6 @@
 	 - shortest path function and display
 	 - distance / shortest path table
 	 */
-	"use strict";
 	var usedijkstra = document.getElementById("usedijkstra");
 	var pathdiv = document.getElementById("path");
 	var from = document.getElementById("from");
@@ -68,17 +68,32 @@
 	    let target = parseInt(to.value);
 	    let path = [];
 
-	    if (usedijkstra.checked) dijkstra();
-	    else             bellmanford();
+	    let ids = nodes.map(node => node.id);
 
-	    let current = target;
-	    while (current != source) {
-		path.push(current);
-		current = pred[current];
+	    if (ids.includes(source) && ids.includes(target)) {
+		if (usedijkstra.checked)
+		    dijkstra();
+		else
+		    bellmanford();
+
+		let current = target;
+		while (current != source) {
+		    path.push(current);
+		    current = pred[current];
+		}
+		path.push(source);
+		path.reverse();
+		d3.selectAll(".path-edge").classed("path-edge", false);
+		for (let i = 1; i < path.length; i++) {
+		    d3.select("#v" + path[i - 1] + "v" + path[i])
+			.classed("path-edge", true);
+		    d3.select("#v" + path[i] + "v" + path[i - 1])
+			.classed("path-edge", true);
+		}
+		pathdiv.innerHTML=JSON.stringify(path)+" "+dist[target];
+	    } else {
+		pathdiv.innerHTML="source or target vertex not in graph";
 	    }
-	    path.push(source);
-	    path.reverse();
-	    pathdiv.innerHTML = JSON.stringify(path) + " " + dist[target];
 	}
 
 	//node ids are in order in which nodes come in existence
@@ -390,9 +405,11 @@
 	    let source = d.source;
 	    let target = d.target;
 	    let weight = parseInt(prompt('New weight'));
+	    if (isNaN(weight)) return;
 	    removeEdge(d, i);
             var newLink = { source, target, weight };
             links.push(newLink);
+	    restart();
 	}
 	//updates graph by updating links, nodes and binding them with DOM
 	//interface is defined through several events
@@ -405,9 +422,17 @@
             var ed = edges
 		.enter()
 		.append("line")
+		.attr("id", function(d) {
+		    return "v" + d.source.id + "v" + d.target.id;
+		})
 		.attr("class", "edge")
-		.on("mousedown", setWeight)
-		.on("contextmenu", removeEdge);
+		.on("contextmenu", removeEdge)
+		.on("mousedown", function () {
+		    console.log(d3.event.currentTarget);
+		    d3.event.stopPropagation();
+		    d3.event.preventDefault();
+		})
+		.on("dblclick", setWeight);
 
             ed.append("title").text(function(d) {
 		return "v" + d.source.id + "-v" + d.target.id + " (" + d.weight + ")";
@@ -432,7 +457,7 @@
 		.on("mousedown", beginDragLine)
 		.on("mouseup", endDragLine)
 		.on("dblclick", function(d, i) {
-		    source = d.id; 
+		    console.log(d3.event.currentTarget);
 		})
 		.on("contextmenu", removeNode);
 
