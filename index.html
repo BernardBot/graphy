@@ -44,12 +44,14 @@
     </style>
   </head>
   <body>
-    <input id="from" type="text" size="1" placeholder="1">
+    <input id="from" type="text" size="1" value="1" placeholder="v1">
     to
-    <input id="to" type="text" size="1" placeholder="2">
+    <input id="to" type="text" size="1" value="2" placeholder="v2">
     <button onclick="findpath()">find path</button>
-    Use dijkstra
-    <input id="usedijkstra" type="checkbox">
+    Dijkstra
+    <input id="usedijkstra" type="radio" name="algo" checked="checked">
+    Bellman-Ford
+    <input type="radio" name="algo">
     <div id="path">click and drag to modify the graph</div>
 
     <div id="svg-wrap">
@@ -80,11 +82,13 @@
 		    bellmanford();
 
 		let current = target;
-		if (dist[target] < Infinity) {
-		    while (current != source) {
-			path.push(current);
-			current = pred[current];
-		    }
+		if (dist[target] === Infinity) {
+		    pathdiv.innerHTML="no path found";
+		    return;
+		}
+		while (current != source) {
+		    path.push(current);
+		    current = pred[current];
 		}
 		path.push(source);
 		path.reverse();
@@ -99,7 +103,7 @@
 		}
 
 		// display path
-		pathdiv.innerHTML=JSON.stringify(path)+" "+dist[target];
+		pathdiv.innerHTML="path: "+JSON.stringify(path)+" total weight: "+dist[target];
 	    } else {
 		// vertices not found
 		pathdiv.innerHTML="source or target vertex not in graph";
@@ -260,7 +264,10 @@
 
 	    let n = graphn.value;
 	    let p = graphp.value;
-
+	    if (n > 50) {
+		alert("please enter n < 50");
+		return;
+	    }
 	    if (!isNaN(n) && !isNaN(p)) {
 		nodes.splice(0);
 		links.splice(0);
@@ -482,11 +489,21 @@
 	  .on("mouseleave", hideDragLine);
 
 	restart();
+	function help() {
+	    alert(`App interface:
+- To add a vertex left click on whitespace.
+- To add an edge drag from one vertex to another.
+- To delete a vertex/edge right click on it.
+- To see name of a vertex/edge just hover your cursor on it.
+- To set the weight of an edge, click on it.
+`)
+	}
       </script>
     </div>
     <button onclick="clearGraph()">clear graph</button>
     <button onclick="randomGraph()">random graph</button>
-    <input id="graph-n" type="text" size="1" placeholder="n">
-    <input id="graph-p" type="text" size="1" placeholder="p">
+    <input id="graph-n" type="text" size="1" value="10" placeholder="n">
+    <input id="graph-p" type="text" size="1" value=".2" placeholder="p">
+    <button onclick="help()">help</button>
   </body>
 </html>
