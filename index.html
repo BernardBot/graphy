@@ -31,18 +31,26 @@
 
       .vertex {
           cursor: pointer;
+          stroke: #888;
+      }
+
+      .label:hover {
+          stroke: #333;
+          opacity: 0.8;
+	  stroke-width: 1.5px;
       }
 
       .vertex:hover {
           stroke: #333;
           opacity: 0.8;
+	  stroke-width: 2px;
       }
 
       .dragLine.hidden {
           stroke-width: 0;
       }
       .label {
-	  stroke: #000;
+	  stroke: #888;
           cursor: pointer;
       }
     </style>
@@ -107,7 +115,12 @@
 		}
 
 		// display path
-		pathdiv.innerHTML="path: "+JSON.stringify(path)+" total weight: "+dist[target];
+		pathdiv.innerHTML="<b>path: </b>"+path.join("-") + " <b>weight: </b>";
+		for (let i = 1; i < path.length; i++) {
+		    pathdiv.innerHTML += dist[path[i]] - dist[path[i-1]]+ "+";
+		}
+		pathdiv.innerHTML = pathdiv.innerHTML.slice(0,-1);
+		pathdiv.innerHTML += "="+dist[target] + "<b> length: </b>" + (path.length - 1);
 	    } else {
 		// vertices not found
 		pathdiv.innerHTML="source or target vertex not in graph";
@@ -474,7 +487,7 @@
 		.attr("r", r)
 		.attr("class", "vertex")
 		.style("fill", function(d, i) {
-                    return colors[d.id % 10];
+                    return "#fff";
 		})
 		.on("mousedown", beginDragLine)
 		.on("mouseup", endDragLine)
@@ -497,10 +510,13 @@
 		.text(function (d) {return d.id; })
 		.style("text-anchor", "middle")
 		.style("font-family", "Arial")
-		.style("font-size", 12)
+		.style("font-size", "12px")
 		.on("mousedown", beginDragLine)
 		.on("mouseup", endDragLine)
 		.on("contextmenu", removeNode);
+            la.append("title").text(function(d) {
+		return "v" + d.id;
+            });
 	    labels = la.merge(labels);
 
             force.nodes(nodes);
