@@ -13,7 +13,7 @@
 
       .edge {
           stroke: #888;
-          stroke-width: 8px;
+          stroke-width: 5px;
           stroke-linecap: round;
           stroke-linejoin: round;
           cursor: default;
@@ -21,12 +21,12 @@
 
       .path-edge {
           stroke: red;
-          stroke-width: 12px;
+          stroke-width: 10px;
       }
       .edge:hover,
       .dragLine {
           stroke: #333;
-          stroke-width: 10px;
+          stroke-width: 8px;
       }
 
       .vertex {
@@ -59,10 +59,10 @@
       <script>
 	/*
 	 TODO:
-	 - better way to set weight of edge
-	 - pretty print path
 	 - display node id
 	 - display edge weight
+	 - edge width
+	 - advanced protocol
 	 */
 	var usedijkstra = document.getElementById("usedijkstra");
 	var pathdiv = document.getElementById("path");
@@ -140,6 +140,8 @@
 	var edges = svg.append("g").selectAll(".edge");
 
 	var vertices = svg.append("g").selectAll(".vertex");
+
+	var labels = svg.append("g").selectAll(".text");
 
 	var force = d3
             .forceSimulation()
@@ -313,6 +315,13 @@
 		.attr("cy", function(d) {
                     return d.y;
 		});
+	    labels
+		.attr("x", function(d) {
+		    return d.x;
+		})
+    		.attr("y", function (d) {
+		    return d.y+5;
+		});
 	}
 
 	function addNode() {
@@ -470,8 +479,23 @@
             ve.append("title").text(function(d) {
 		return "v" + d.id;
             });
-
             vertices = ve.merge(vertices);
+
+	    labels = labels.data(nodes, function(d) {
+		return d.id;
+	    });
+	    labels.exit().remove();
+
+	    var la = labels
+		.enter()
+		.append("text")
+		.attr("class", "label")
+		.text(function (d) {return d.id; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 12);
+	    labels = la.merge(labels);
 
             force.nodes(nodes);
             force.force("link").links(links);
